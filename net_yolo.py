@@ -15,8 +15,9 @@ class YOLOPAFPN(nn.Module):
         Conv = DWConv if depthwise else BaseConv
 
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        # 不改变通道和大小
         self.lateral_conv0 = BaseConv(int(in_channels[2] * width), int(in_channels * width), 1, 1, act=act)
-        self.C3_P4 = CSPLayer(
+        self.C3_p4 = CSPLayer(
             int(2 * in_channels[1] * width),
             int(in_channels * width),
             round(3 * depth),
@@ -26,3 +27,29 @@ class YOLOPAFPN(nn.Module):
         )
 
         self.reduce_conv1 = BaseConv(int(in_channels[1] * width), int(in_channels[0] * width), 1, 1, act=act)
+        self.C3_p3 = CSPLayer(
+            int(2 * in_channels[0] * width),
+            int(in_channels[0] * width),
+            round(3 * depth),
+            False,
+            depthwise=depthwise,
+            act=act
+        )
+
+        self.bu_conv2 = Conv(int(in_channels[0] * width), int(in_channels[0] * width), 3, 2, act=act)
+
+        self.C3_n4 = CSPLayer(
+            int(2 * in_channels[1] * width),
+            int(in_channels[2] * width),
+            round(3 * depth),
+            False,
+            depthwise=depthwise,
+            act=act
+        )
+
+    def forward(self, input):
+        out_features = self.backbone.forward(input)
+        features = [out_features[f] for f in self.in_features]
+        [feat1, feat2, feat3] = features
+
+        p5 = self.lateral_conv0(feat3)
