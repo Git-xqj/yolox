@@ -2,6 +2,8 @@ import torch
 from torch import nn
 
 
+# 主干网络
+
 class SiLU(nn.Module):
     def forward(self, x):
         return x * torch.sigmoid(x)
@@ -70,6 +72,7 @@ class Bottleneck(nn.Module):
         return y
 
 
+# 提高感受野
 class SPPBottleneck(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=(5, 9, 13), act='silu'):
         super(SPPBottleneck, self).__init__()
@@ -111,6 +114,8 @@ class CSPLayer(nn.Module):
         x = torch.cat((x_1, x_2), dim=1)
         return self.conv3(x)
 
+
+#   在一张图片中每隔一个像素拿到一个值，获得四个独立的层
 
 class Focus(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, act='silu'):
